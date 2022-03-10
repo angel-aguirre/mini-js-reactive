@@ -1,9 +1,16 @@
 class Reactive {
+    // Dependencies
+    deps = new Map();
+
     constructor(options) {
         this.origin = options.data();
+
+        const self = this;
+
         this.$data = new Proxy(this.origin, {
             get(target, name) {
                 if ( Reflect.has(target, name) ) {
+                    self.track(target, name);
                     return Reflect.get(target, name);
                 }
 
@@ -12,8 +19,29 @@ class Reactive {
             },
             set(target, name, value) {
                 Reflect.set(target, name, value);
+                self.trigger(name);
             },
         });
+    }
+
+    track(target, name) {
+        if (!this.deps.has(name)) {
+            const effect = () => {
+                document.querySelectorAll(`*[x-text=${name}]`).forEach(el => {
+                    this.xText(el, target, name);
+                });
+
+                document.querySelectorAll(`*[x-model=${name}]`).forEach(el => {
+                    this.xModel(el, target, name);
+                });
+            }
+            this.deps.set(name, effect);
+        }
+    }
+
+    trigger(name) {
+        const effect = this.deps.get(name);
+        effect();
     }
 
     mount() {
