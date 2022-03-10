@@ -34,6 +34,11 @@ class Reactive {
                 document.querySelectorAll(`*[x-model=${name}]`).forEach(el => {
                     this.xModel(el, target, name);
                 });
+
+                document.querySelectorAll('*[x-bind]').forEach(el => {
+                    const [attr, name] = el.getAttribute('x-bind').match(/(\w+)/g);
+                    this.xBind(el, target, name, attr);
+                });
             }
             this.deps.set(name, effect);
         }
@@ -57,6 +62,11 @@ class Reactive {
                 Reflect.set(this.$data, name, el.value);
             });
         });
+
+        document.querySelectorAll('*[x-bind]').forEach(el => {
+            const [attr, name] = el.getAttribute('x-bind').match(/(\w+)/g);
+            this.xBind(el, this.$data, name, attr);
+        });
     }
 
     xText(el, target, name) {
@@ -65,6 +75,11 @@ class Reactive {
 
     xModel(el, target, name) {
         el.value = Reflect.get(target, name);
+    }
+
+    xBind(el, target, name, attr) {
+        const value = Reflect.get(target, name);
+        el.setAttribute(attr, value);
     }
 }
 
